@@ -27,7 +27,11 @@ function RegisterPage() {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
 
   const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();                    // ← Very important
+    e.stopPropagation();                   // ← Added this
+
+    console.log("Register form submitted"); // Debug
+
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -38,8 +42,9 @@ function RegisterPage() {
     try {
       await register(parsed.data.email, parsed.data.password, parsed.data.username);
       toast.success("Account created successfully!");
-      navigate({ to: "/login" });        // Go to login after register
+      navigate({ to: "/login" });
     } catch (error: any) {
+      console.error("Registration error:", error);
       toast.error(error.message || "Registration failed");
     } finally {
       setLoading(false);
@@ -69,6 +74,7 @@ function RegisterPage() {
             className="h-12 rounded-xl"
             placeholder="aurora"
             autoComplete="username"
+            disabled={loading}
           />
         </div>
         <div className="space-y-2">
@@ -81,6 +87,7 @@ function RegisterPage() {
             className="h-12 rounded-xl"
             placeholder="you@example.com"
             autoComplete="email"
+            disabled={loading}
           />
         </div>
         <div className="space-y-2">
@@ -93,9 +100,15 @@ function RegisterPage() {
             className="h-12 rounded-xl"
             placeholder="••••••••"
             autoComplete="new-password"
+            disabled={loading}
           />
         </div>
-        <Button type="submit" disabled={loading} className="h-12 w-full rounded-xl text-base">
+
+        <Button 
+          type="submit" 
+          disabled={loading} 
+          className="h-12 w-full rounded-xl text-base"
+        >
           {loading ? "Creating..." : "Create account"}
         </Button>
       </form>

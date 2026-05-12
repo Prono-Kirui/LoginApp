@@ -24,6 +24,10 @@ export interface LoginDto {
   password: string;
 }
 
+export interface ForgotPasswordDto {
+  email: string;
+}
+
 class ApiClient {
   private token: string | null = null;
 
@@ -47,18 +51,32 @@ class ApiClient {
     const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `API Error: ${response.status}`);
+      // 🔥 FIXED: Handle both JSON and plain text errors from .NET
+      let errorMessage = `HTTP Error: ${response.status}`;
+
+      try {
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType?.includes('application/json')) {
+          const errorJson = await response.json();
+          errorMessage = errorJson.message || errorJson.error || JSON.stringify(errorJson);
+        } else {
+          // Plain text like "Invalid credentials"
+          errorMessage = await response.text();
+        }
+      } catch (e) {
+        // Fallback if reading body fails
+        errorMessage = response.statusText || `Error ${response.status}`;
+      }
+
+      throw new Error(errorMessage.trim());
     }
 
-    // This is the key fix for TypeScript strict mode
     const data = await response.json();
     return data as T;
   }
 
   async register(data: RegisterDto): Promise<{ message: string }> {
-    console.log("📤 Sending to backend:", data);   // ← Add this line
-
     return this.request<{ message: string }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -67,6 +85,13 @@ class ApiClient {
 
   async login(data: LoginDto): Promise<LoginResponse> {
     return this.request<LoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async forgotPassword(data: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/api/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify(data),
     });

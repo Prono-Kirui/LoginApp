@@ -25,26 +25,35 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const parsed = schema.safeParse(form);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
-      return;
-    }
+ const onSubmit = async (e: FormEvent) => {
+  e.preventDefault();
 
-    setLoading(true);
-    try {
-      await login(parsed.data.email, parsed.data.password);
-      toast.success("Welcome back");
-      navigate({ to: "/home" });
-    } catch (error: any) {
+  const parsed = schema.safeParse(form);
+  if (!parsed.success) {
+    toast.error(parsed.error.issues[0].message);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    await login(parsed.data.email, parsed.data.password);
+    toast.success("Welcome back! 👋");
+    navigate({ to: "/home" });
+  } catch (error: any) {
+    const msg = error?.message?.toLowerCase() || "";
+
+    if (msg.includes("invalid credentials") || msg.includes("unauthorized")) {
+      toast.error("Invalid credentials");
+    } else if (msg.includes("network") || msg.includes("failed to fetch")) {
+      toast.error("Cannot connect to server. Is the backend running?");
+    } else {
       toast.error(error.message || "Login failed");
-    } finally {
-      setLoading(false);
     }
-  };
-
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <AuthShell
       title="Welcome back"

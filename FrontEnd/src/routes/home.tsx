@@ -52,7 +52,7 @@ function HomePage() {
 
         <div className="mt-8 rounded-2xl border bg-card p-6">
           <p className="text-sm text-muted-foreground">
-            You're signed in. This is your home — build something delightful here.
+           
           </p>
         </div>
       </div>
